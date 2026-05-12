@@ -1,0 +1,31 @@
+[project]
+name = "pcos-navigator"
+version = "0.1.0"
+description = "PCOS Navigator demo MVP for evidence-based triage and diagnostic pathway support."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "joblib>=1.4.2",
+    "numpy>=2.2.0",
+    "openpyxl>=3.1.5",
+    "pandas>=2.2.3",
+    "plotly>=5.24.1",
+    "scikit-learn>=1.6.0",
+    "streamlit>=1.41.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pcos_navigator"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
