@@ -42,9 +42,24 @@ uv run pytest
 
 - `reports/data_profile.md`
 - `reports/model_metrics.json`
+- `reports/model_report.md`
 - `models/pcos_models.joblib`
 
-Generated reports and model artifacts are ignored by git.
+Generated reports and model artifacts are ignored by git. Regenerate them with:
+
+```powershell
+uv run python scripts/train_models.py
+```
+
+## Judge-Ready Evidence
+
+The training command writes:
+
+- bootstrap 95% confidence intervals for AUROC, AUPRC, sensitivity, specificity, F1, and Brier score
+- calibration bins for the Model Evidence dashboard tab
+- a selected screening threshold per model tier
+- subgroup metrics by BMI group and age group, with small groups marked as insufficient
+- `reports/model_report.md`, a human-readable model summary for presentation prep
 
 ## Dataset Limitations
 

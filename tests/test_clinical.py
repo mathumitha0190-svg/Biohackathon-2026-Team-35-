@@ -1,4 +1,4 @@
-from pcos_navigator.clinical import assess_patient
+from pcos_navigator.clinical import assess_patient, clinician_handoff_summary
 from pcos_navigator.demo_cases import DEMO_CASES
 
 
@@ -31,3 +31,13 @@ def test_endometriosis_like_case_triggers_referral_flag():
 def test_incomplete_data_case_recommends_more_evidence():
     assessment = assess_patient(DEMO_CASES["Incomplete Data"], probability=0.45, tier="history")
     assert "Low-resource pathway used" in action_text(assessment)
+
+
+def test_handoff_uses_triage_and_next_step_language_without_diagnostic_claim():
+    patient = DEMO_CASES["Typical PCOS"]
+    assessment = assess_patient(patient, probability=0.82, tier="full")
+    summary = clinician_handoff_summary(patient, 0.82, "High", "full", assessment)
+
+    assert "PCOS triage risk" in summary
+    assert "Recommended next step" in summary
+    assert "diagnosis" not in summary.lower()

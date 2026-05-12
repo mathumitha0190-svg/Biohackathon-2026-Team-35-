@@ -27,5 +27,5 @@ build-backend = "hatchling.build"
 packages = ["src/pcos_navigator"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]

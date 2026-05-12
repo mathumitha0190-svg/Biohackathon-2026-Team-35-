@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from pcos_navigator.clinical import assess_patient
+from pcos_navigator.clinical import assess_patient, clinician_handoff_summary
 from pcos_navigator.config import MODEL_ARTIFACT_PATH, SAFETY_STATEMENT
 from pcos_navigator.data import available_model_tier, load_clean_pcos
 from pcos_navigator.demo_cases import DEMO_CASES
@@ -22,7 +22,10 @@ st.set_page_config(
 @st.cache_resource(show_spinner=False)
 def get_artifact() -> dict:
     if MODEL_ARTIFACT_PATH.exists():
-        return load_artifact()
+        artifact = load_artifact()
+        first_tier = next(iter(artifact.get("metrics", {}).get("tiers", {}).values()), {})
+        if "confidence_intervals" in first_tier and "calibration_bins" in first_tier:
+            return artifact
     df = load_clean_pcos()
     artifact, metrics = train_models(df)
     save_artifacts(artifact, metrics)
@@ -175,6 +178,133 @@ def probability_chart(probability: float) -> go.Figure:
     )
 
 
+def driver_chart(drivers: list[tuple[str, float]]) -> go.Figure:
+    frame = pd.DataFrame(drivers, columns=["Feature", "Contribution"]).sort_values("Contribution")
+    colors = ["#dc2626" if value > 0 else "#2563eb" for value in frame["Contribution"]]
+    figure = go.Figure(
+        go.Bar(
+            x=frame["Contribution"],
+            y=frame["Feature"],
+            orientation="h",
+            marker_color=colors,
+        )
+    )
+    figure.update_layout(
+        xaxis_title="Coefficient contribution",
+        yaxis_title="",
+        height=320,
+        margin={"l": 120, "r": 20, "t": 20, "b": 40},
+    )
+    return figure
+
+
+def calibration_chart(calibration_bins: list[dict]) -> go.Figure:
+    frame = pd.DataFrame(calibration_bins)
+    figure = go.Figure()
+    figure.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode="lines",
+            name="Perfect calibration",
+            line={"dash": "dash", "color": "#64748b"},
+        )
+    )
+    figure.add_trace(
+        go.Scatter(
+            x=frame["mean_predicted"],
+            y=frame["observed_rate"],
+            mode="lines+markers",
+            name="Observed",
+            marker={"size": frame["n"].clip(lower=6, upper=22)},
+            line={"color": "#2563eb"},
+        )
+    )
+    figure.update_layout(
+        xaxis_title="Mean predicted probability",
+        yaxis_title="Observed PCOS rate",
+        xaxis={"range": [0, 1]},
+        yaxis={"range": [0, 1]},
+        height=360,
+        margin={"l": 40, "r": 20, "t": 20, "b": 40},
+    )
+    return figure
+
+
+def metric_ci_text(metric: str, tier_metrics: dict) -> str:
+    ci = tier_metrics["confidence_intervals"].get(metric)
+    if not ci:
+        return f"{tier_metrics[metric]:.3f}"
+    return f"{tier_metrics[metric]:.3f} ({ci['low']:.3f}-{ci['high']:.3f})"
+
+
+def render_model_evidence(artifact: dict, active_tier: str) -> None:
+    st.subheader("Model Evidence")
+    st.caption(SAFETY_STATEMENT)
+    metrics = artifact["metrics"]["tiers"]
+    tiers = list(metrics.keys())
+    selected_tier = st.selectbox(
+        "Evidence tier",
+        tiers,
+        index=tiers.index(active_tier) if active_tier in tiers else 0,
+    )
+    tier_metrics = metrics[selected_tier]
+
+    comparison_rows = []
+    for tier, values in metrics.items():
+        selected = values["selected_threshold"]
+        comparison_rows.append(
+            {
+                "Tier": tier,
+                "AUROC (95% CI)": metric_ci_text("auroc", values),
+                "AUPRC (95% CI)": metric_ci_text("auprc", values),
+                "Sensitivity (95% CI)": metric_ci_text("sensitivity", values),
+                "Specificity (95% CI)": metric_ci_text("specificity", values),
+                "Brier (95% CI)": metric_ci_text("brier_score", values),
+                "Screening threshold": f"{selected['threshold']:.2f}",
+            }
+        )
+    st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True, hide_index=True)
+
+    threshold = tier_metrics["selected_threshold"]
+    st.info(
+        f"Selected screening threshold for {selected_tier}: {threshold['threshold']:.2f}. "
+        f"Sensitivity {threshold['sensitivity']:.0%}, specificity {threshold['specificity']:.0%}; "
+        f"{threshold['reason']}."
+    )
+
+    evidence_a, evidence_b = st.columns(2)
+    with evidence_a:
+        st.write("Calibration")
+        st.plotly_chart(calibration_chart(tier_metrics["calibration_bins"]), use_container_width=True)
+    with evidence_b:
+        st.write("Threshold tradeoff")
+        threshold_df = pd.DataFrame(tier_metrics["threshold_table"])
+        st.dataframe(
+            threshold_df[["threshold", "sensitivity", "specificity", "f1", "tp", "fp", "fn", "tn"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    subgroup_rows = []
+    for group_name, group_metrics in tier_metrics["subgroup_metrics"].items():
+        for segment, values in group_metrics.items():
+            subgroup_rows.append(
+                {
+                    "Group": group_name,
+                    "Segment": segment,
+                    "n": values["n"],
+                    "Positive": values["positive_count"],
+                    "Status": values.get("reason", "ok"),
+                    "AUROC": values.get("auroc"),
+                    "Sensitivity": values.get("sensitivity"),
+                    "Specificity": values.get("specificity"),
+                }
+            )
+    st.write("Subgroup summary")
+    st.dataframe(pd.DataFrame(subgroup_rows), use_container_width=True, hide_index=True)
+
+
 def render_results(prediction, assessment) -> None:
     st.subheader("Risk Result")
     result_a, result_b, result_c = st.columns(3)
@@ -186,6 +316,7 @@ def render_results(prediction, assessment) -> None:
 
     st.write("Top model drivers")
     driver_df = pd.DataFrame(prediction.top_drivers, columns=["Feature", "Contribution"])
+    st.plotly_chart(driver_chart(prediction.top_drivers), use_container_width=True)
     st.dataframe(driver_df, use_container_width=True, hide_index=True)
 
 
@@ -198,7 +329,7 @@ def render_checklist(assessment) -> None:
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
-def render_actions(assessment) -> None:
+def render_actions(patient, prediction, assessment) -> None:
     st.subheader("Differential Flags")
     if assessment.differential_flags:
         for flag in assessment.differential_flags:
@@ -210,6 +341,16 @@ def render_actions(assessment) -> None:
     for action in assessment.next_actions:
         st.success(action)
 
+    st.subheader("Clinician Handoff")
+    handoff = clinician_handoff_summary(
+        patient,
+        prediction.probability,
+        prediction.risk_tier,
+        prediction.tier,
+        assessment,
+    )
+    st.text_area("Handoff summary", value=handoff, height=260)
+
 
 def main() -> None:
     st.title("PCOS Navigator")
@@ -220,8 +361,8 @@ def main() -> None:
     case_name = st.sidebar.selectbox("Select case", list(DEMO_CASES.keys()))
     defaults = default_case_values(case_name)
 
-    tab_intake, tab_risk, tab_checklist, tab_action = st.tabs(
-        ["Patient Intake", "Risk Result", "Guideline Checklist", "Next Action"]
+    tab_intake, tab_risk, tab_checklist, tab_evidence, tab_action = st.tabs(
+        ["Patient Intake", "Risk Result", "Guideline Checklist", "Model Evidence", "Next Action"]
     )
     with tab_intake:
         patient = patient_form(defaults)
@@ -235,8 +376,10 @@ def main() -> None:
         render_results(prediction, assessment)
     with tab_checklist:
         render_checklist(assessment)
+    with tab_evidence:
+        render_model_evidence(artifact, prediction.tier)
     with tab_action:
-        render_actions(assessment)
+        render_actions(patient, prediction, assessment)
 
 
 if __name__ == "__main__":

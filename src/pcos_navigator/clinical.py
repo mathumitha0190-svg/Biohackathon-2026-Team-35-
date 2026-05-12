@@ -147,7 +147,7 @@ def recommend_actions(patient: dict, probability: float, tier: str, checklist: l
     ovulatory = next(item for item in checklist if item.name == "Ovulatory dysfunction")
 
     if high_risk and exclusions.status == "Incomplete":
-        actions.append("Complete endocrine exclusion checks before confirming diagnosis.")
+        actions.append("Complete endocrine exclusion checks before closing the PCOS evaluation.")
     if high_risk or medium_risk:
         actions.append("Use the guideline checklist to decide whether PCOS diagnostic criteria are sufficiently supported.")
     if metabolic.status == "Present":
@@ -162,7 +162,7 @@ def recommend_actions(patient: dict, probability: float, tier: str, checklist: l
         actions.append("Lean PCOS alert: do not dismiss PCOS pathway because BMI is normal.")
 
     if not actions:
-        actions.append("Collect missing clinical evidence and monitor symptoms rather than overdiagnosing from limited data.")
+        actions.append("Collect missing clinical evidence and monitor symptoms rather than overcommitting from limited data.")
 
     return actions
 
@@ -182,3 +182,42 @@ def assess_patient(patient: dict, probability: float, tier: str) -> ClinicalAsse
     actions = recommend_actions(patient, probability, tier, checklist, differentials)
     confidence = confidence_label(tier, probability, checklist)
     return ClinicalAssessment(checklist, differentials, actions, confidence)
+
+
+def clinician_handoff_summary(
+    patient: dict,
+    probability: float,
+    risk_tier: str,
+    model_tier: str,
+    assessment: ClinicalAssessment,
+) -> str:
+    age = numeric(patient, "age")
+    bmi = numeric(patient, "bmi")
+    cycle = "irregular" if numeric(patient, "cycle") == 1 else "regular or not established"
+    supported = [
+        item.name
+        for item in assessment.checklist
+        if item.status in {"Supported", "Present"}
+    ]
+    missing_or_caution = [
+        f"{item.name}: {item.notes}"
+        for item in assessment.checklist
+        if item.status in {"Missing", "Incomplete", "Caution"}
+    ]
+    red_flags = assessment.differential_flags or ["No endometriosis-pattern red flags from provided intake"]
+
+    lines = [
+        "Clinician handoff summary",
+        "",
+        "This tool supports triage and investigation planning and requires clinician interpretation.",
+        "",
+        f"- Patient profile: age {age:.0f} years, BMI {bmi:.1f}, cycle pattern {cycle}."
+        if age is not None and bmi is not None
+        else "- Patient profile: age or BMI is incomplete.",
+        f"- PCOS triage risk: {risk_tier} ({probability:.0%}) using the {model_tier} model tier.",
+        f"- Guideline evidence supported: {', '.join(supported) if supported else 'none from provided intake'}.",
+        f"- Differential red flags: {', '.join(red_flags)}.",
+        f"- Missing or caution items: {'; '.join(missing_or_caution) if missing_or_caution else 'none from provided intake'}.",
+        "- Recommended next step: " + " ".join(assessment.next_actions),
+    ]
+    return "\n".join(lines)
