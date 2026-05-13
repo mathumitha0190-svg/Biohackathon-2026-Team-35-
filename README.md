@@ -44,11 +44,18 @@ Build a shareable presentation bundle:
 uv run python scripts/export_presentation.py
 ```
 
+Run final readiness checks:
+
+```powershell
+uv run python scripts/check_readiness.py
+```
+
 ## Outputs
 
 - `reports/data_profile.md`
 - `reports/model_metrics.json`
 - `reports/model_report.md`
+- `reports/readiness_report.md`
 - `models/pcos_models.joblib`
 - `exports/pcos_navigator_presentation/`
 
@@ -76,6 +83,10 @@ Committed judge-facing materials live in `docs/`:
 - `docs/slide_outline.md`
 - `docs/case_cards.md`
 - `docs/judging_map.md`
+- `docs/evidence_dossier.md`
+- `docs/rubric_scorecard.md`
+- `docs/limitations_and_validation.md`
+- `docs/final_submission_checklist.md`
 
 Recommended live demo flow:
 
@@ -87,6 +98,21 @@ Recommended live demo flow:
 6. End on the `4 Evidence` tab with calibration, thresholds, and subgroup caveats.
 
 The export command creates an ignored bundle at `exports/pcos_navigator_presentation/` and intentionally excludes datasets and model binaries.
+
+## Final Readiness
+
+Use this sequence before presenting:
+
+```powershell
+uv run python scripts/profile_data.py
+uv run python scripts/train_models.py
+uv run python scripts/check_readiness.py
+uv run python scripts/export_presentation.py
+uv run pytest
+uv run streamlit run app.py
+```
+
+The readiness command writes `reports/readiness_report.md`, which checks source docs, generated artifacts, export safety, the safety statement, app command, and rubric coverage.
 
 ## Dataset Limitations
 

@@ -53,11 +53,28 @@ def yes_no(label: str, value: int | None = 0) -> int:
     return options[st.radio(label, options.keys(), index=list(options).index(default), horizontal=True)]
 
 
+def optional_number_args(
+    value: float | int | None,
+    min_value: float | int = 0.0,
+    step: float | int = 0.1,
+) -> tuple[float, float, float]:
+    normalized_min = float(min_value)
+    normalized_value = normalized_min if value is None else float(value)
+    normalized_step = float(step)
+    return normalized_min, normalized_value, normalized_step
+
+
 def optional_number(label: str, value: float | int | None, min_value: float = 0.0, step: float = 0.1) -> float | None:
     enabled = st.checkbox(f"Include {label}", value=value is not None)
     if not enabled:
         return None
-    return st.number_input(label, min_value=min_value, value=float(value or min_value), step=step)
+    normalized_min, normalized_value, normalized_step = optional_number_args(value, min_value, step)
+    return st.number_input(
+        label,
+        min_value=normalized_min,
+        value=normalized_value,
+        step=normalized_step,
+    )
 
 
 def default_case_values(case_name: str) -> dict:

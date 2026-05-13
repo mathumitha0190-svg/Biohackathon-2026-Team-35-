@@ -14,7 +14,10 @@ def test_export_presentation_bundle_includes_docs_and_readme(tmp_path):
     readme = (export_dir / "README.md").read_text(encoding="utf-8")
     assert SAFETY_STATEMENT in readme
     assert "uv run streamlit run app.py" in readme
+    assert "uv run python scripts/check_readiness.py" in readme
     assert "Typical PCOS" in readme
+    assert (export_dir / "evidence_dossier.md").exists()
+    assert (export_dir / "rubric_scorecard.md").exists()
 
 
 def test_export_presentation_excludes_data_and_model_files(tmp_path):
@@ -34,3 +37,13 @@ def test_export_includes_model_report_only_when_present(tmp_path):
         assert model_report.exists()
     else:
         assert not model_report.exists()
+
+
+def test_export_includes_readiness_report_only_when_present(tmp_path):
+    export_dir = export_presentation(tmp_path / "pcos_navigator_presentation")
+    readiness_report = export_dir / "readiness_report.md"
+
+    if Path("reports/readiness_report.md").exists():
+        assert readiness_report.exists()
+    else:
+        assert not readiness_report.exists()
