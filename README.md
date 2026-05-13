@@ -63,7 +63,7 @@ uv run python scripts/train_models.py
 The training command writes:
 
 - bootstrap 95% confidence intervals for AUROC, AUPRC, sensitivity, specificity, F1, and Brier score
-- calibration bins for the Model Evidence dashboard tab
+- calibration bins for the `4 Evidence` dashboard tab
 - a selected screening threshold per model tier
 - subgroup metrics by BMI group and age group, with small groups marked as insufficient
 - `reports/model_report.md`, a human-readable model summary for presentation prep
@@ -84,7 +84,7 @@ Recommended live demo flow:
 3. Demo `Lean PCOS` to show normal-BMI PCOS handling.
 4. Demo `Endometriosis-like` to show differential red flags.
 5. Demo `Incomplete Data` to show low-resource fallback.
-6. End on the `Model Evidence` tab with calibration, thresholds, and subgroup caveats.
+6. End on the `4 Evidence` tab with calibration, thresholds, and subgroup caveats.
 
 The export command creates an ignored bundle at `exports/pcos_navigator_presentation/` and intentionally excludes datasets and model binaries.
 

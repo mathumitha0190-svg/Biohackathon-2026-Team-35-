@@ -11,6 +11,21 @@ from pcos_navigator.demo_cases import DEMO_CASES
 from pcos_navigator.modeling import load_artifact, predict_patient, save_artifacts, train_models
 
 
+CASE_EXPLANATIONS = {
+    "Typical PCOS": "Shows the complete pathway: high triage risk, guideline evidence, metabolic risk, and next-step planning.",
+    "Lean PCOS": "Shows why normal BMI should not dismiss PCOS when cycle and androgen evidence are present.",
+    "Endometriosis-like": "Shows differential triage when pain-pattern red flags are stronger than PCOS evidence.",
+    "Incomplete Data": "Shows low-resource fallback when labs and ultrasound are missing.",
+}
+
+DEMO_PATH = [
+    ("Typical PCOS", "complete pathway"),
+    ("Lean PCOS", "normal-BMI PCOS handling"),
+    ("Endometriosis-like", "differential red flags"),
+    ("Incomplete Data", "history-only fallback"),
+]
+
+
 st.set_page_config(
     page_title="PCOS Navigator",
     page_icon="",
@@ -47,6 +62,52 @@ def optional_number(label: str, value: float | int | None, min_value: float = 0.
 
 def default_case_values(case_name: str) -> dict:
     return DEMO_CASES.get(case_name, DEMO_CASES["Typical PCOS"]).copy()
+
+
+def top_summary(prediction, assessment) -> dict[str, str]:
+    next_step = assessment.next_actions[0] if assessment.next_actions else "Collect missing clinical evidence."
+    return {
+        "risk_tier": prediction.risk_tier,
+        "probability": f"{prediction.probability:.0%}",
+        "model_tier": prediction.tier,
+        "confidence": assessment.confidence,
+        "recommended_next_step": next_step,
+    }
+
+
+def grouped_actions(assessment) -> dict[str, list[str]]:
+    groups = {
+        "PCOS pathway": [],
+        "Differential flags": [],
+        "Missing evidence": [],
+        "Recommended next step": [],
+    }
+
+    for action in assessment.next_actions:
+        lower = action.lower()
+        if "endometriosis" in lower or "gynecology" in lower:
+            groups["Differential flags"].append(action)
+        elif "missing" in lower or "exclusion" in lower or "collect" in lower or "low-resource" in lower:
+            groups["Missing evidence"].append(action)
+        elif "metabolic" in lower or "guideline" in lower or "lean pcos" in lower or "pcos" in lower:
+            groups["PCOS pathway"].append(action)
+        else:
+            groups["Recommended next step"].append(action)
+
+    if not groups["Differential flags"]:
+        groups["Differential flags"].append("No endometriosis-pattern red flags from the provided intake.")
+    for flag in assessment.differential_flags:
+        if flag not in groups["Differential flags"]:
+            groups["Differential flags"].append(flag)
+
+    for item in assessment.checklist:
+        if item.status in {"Missing", "Incomplete", "Caution"}:
+            groups["Missing evidence"].append(f"{item.name}: {item.notes}")
+
+    if assessment.next_actions:
+        groups["Recommended next step"].append(assessment.next_actions[0])
+
+    return groups
 
 
 def patient_form(defaults: dict) -> dict:
@@ -240,6 +301,7 @@ def metric_ci_text(metric: str, tier_metrics: dict) -> str:
 
 def render_model_evidence(artifact: dict, active_tier: str) -> None:
     st.subheader("Model Evidence")
+    st.caption("Shows the validation evidence judges can use to trust the triage score.")
     st.caption(SAFETY_STATEMENT)
     metrics = artifact["metrics"]["tiers"]
     tiers = list(metrics.keys())
@@ -307,6 +369,7 @@ def render_model_evidence(artifact: dict, active_tier: str) -> None:
 
 def render_results(prediction, assessment) -> None:
     st.subheader("Risk Result")
+    st.caption("Summarizes the patient-level triage score and the most influential model drivers.")
     result_a, result_b, result_c = st.columns(3)
     result_a.metric("PCOS triage risk", prediction.risk_tier)
     result_b.metric("Probability", f"{prediction.probability:.0%}")
@@ -322,24 +385,64 @@ def render_results(prediction, assessment) -> None:
 
 def render_checklist(assessment) -> None:
     st.subheader("Guideline Checklist")
+    st.caption("Translates the intake into clinical evidence areas instead of a black-box result.")
     rows = [
         {"Evidence area": item.name, "Status": item.status, "Notes": item.notes}
         for item in assessment.checklist
     ]
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
+    status_columns = st.columns(len(assessment.checklist))
+    for column, item in zip(status_columns, assessment.checklist):
+        with column:
+            if item.status in {"Supported", "Present"}:
+                st.success(item.status)
+            elif item.status == "Caution":
+                st.warning(item.status)
+            elif item.status == "Incomplete":
+                st.warning(item.status)
+            else:
+                st.info(item.status)
+            st.caption(item.name)
+
+
+def render_top_summary(prediction, assessment) -> None:
+    summary = top_summary(prediction, assessment)
+    st.subheader("Case Summary")
+    metric_a, metric_b, metric_c, metric_d = st.columns(4)
+    metric_a.metric("PCOS triage risk", summary["risk_tier"])
+    metric_b.metric("Probability", summary["probability"])
+    metric_c.metric("Model tier", summary["model_tier"])
+    metric_d.metric("Confidence", summary["confidence"])
+    st.success(f"Recommended next step: {summary['recommended_next_step']}")
+
 
 def render_actions(patient, prediction, assessment) -> None:
-    st.subheader("Differential Flags")
-    if assessment.differential_flags:
-        for flag in assessment.differential_flags:
-            st.warning(flag)
-    else:
-        st.info("No endometriosis-pattern red flags from the provided intake.")
+    st.subheader("Next Action")
+    st.caption("Groups the output into the pathway decision a clinician can act on next.")
+    grouped = grouped_actions(assessment)
 
-    st.subheader("Next Best Action")
-    for action in assessment.next_actions:
-        st.success(action)
+    action_a, action_b = st.columns(2)
+    with action_a:
+        st.write("PCOS pathway")
+        for item in grouped["PCOS pathway"] or ["No PCOS-specific action from the current intake."]:
+            st.success(item)
+
+        st.write("Missing evidence")
+        for item in grouped["Missing evidence"] or ["No missing evidence flagged from the current intake."]:
+            st.warning(item)
+
+    with action_b:
+        st.write("Differential flags")
+        for item in grouped["Differential flags"]:
+            if item.startswith("No endometriosis"):
+                st.info(item)
+            else:
+                st.warning(item)
+
+        st.write("Recommended next step")
+        for item in grouped["Recommended next step"] or ["Collect missing clinical evidence."]:
+            st.success(item)
 
     st.subheader("Clinician Handoff")
     handoff = clinician_handoff_summary(
@@ -349,7 +452,7 @@ def render_actions(patient, prediction, assessment) -> None:
         prediction.tier,
         assessment,
     )
-    st.text_area("Handoff summary", value=handoff, height=260)
+    st.text_area("Copy handoff summary for clinician-facing triage support", value=handoff, height=260)
 
 
 def main() -> None:
@@ -359,18 +462,28 @@ def main() -> None:
     artifact = get_artifact()
     st.sidebar.header("Demo Case")
     case_name = st.sidebar.selectbox("Select case", list(DEMO_CASES.keys()))
+    st.sidebar.info(CASE_EXPLANATIONS[case_name])
+    st.sidebar.header("Demo Path")
+    for index, (case, purpose) in enumerate(DEMO_PATH, start=1):
+        st.sidebar.write(f"{index}. **{case}** - {purpose}")
     defaults = default_case_values(case_name)
 
+    summary_container = st.container()
+
     tab_intake, tab_risk, tab_checklist, tab_evidence, tab_action = st.tabs(
-        ["Patient Intake", "Risk Result", "Guideline Checklist", "Model Evidence", "Next Action"]
+        ["1 Intake", "2 Risk", "3 Checklist", "4 Evidence", "5 Action"]
     )
     with tab_intake:
+        st.caption("Start here: choose a demo case, review patient inputs, and edit values if needed.")
         patient = patient_form(defaults)
         st.json({key: value for key, value in patient.items() if value is not None})
 
     tier = available_model_tier(patient)
     prediction = predict_patient(artifact, patient, tier)
     assessment = assess_patient(patient, prediction.probability, tier)
+
+    with summary_container:
+        render_top_summary(prediction, assessment)
 
     with tab_risk:
         render_results(prediction, assessment)

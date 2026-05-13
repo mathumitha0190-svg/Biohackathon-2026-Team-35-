@@ -26,11 +26,19 @@ http://localhost:8501
 
 Point out the tabs:
 
-- Patient Intake
-- Risk Result
-- Guideline Checklist
-- Model Evidence
-- Next Action
+- 1 Intake
+- 2 Risk
+- 3 Checklist
+- 4 Evidence
+- 5 Action
+
+Point out the summary row:
+
+- PCOS triage risk
+- probability
+- model tier
+- confidence
+- recommended next step
 
 ### 1:00-2:00 - Case 1: Typical PCOS
 
@@ -42,10 +50,11 @@ Typical PCOS
 
 Click path:
 
-1. `Patient Intake`: show irregular cycles, androgen signs, metabolic data, AMH/ultrasound fields.
-2. `Risk Result`: show high triage risk, probability, confidence, and coefficient contribution chart.
-3. `Guideline Checklist`: show ovulatory dysfunction, clinical hyperandrogenism, ovarian morphology/AMH, exclusions, and metabolic risk.
-4. `Next Action`: show endocrine exclusions and metabolic screening.
+1. `1 Intake`: show irregular cycles, androgen signs, metabolic data, AMH/ultrasound fields.
+2. Summary row: show high triage risk and recommended next step.
+3. `2 Risk`: show probability, confidence, and coefficient contribution chart.
+4. `3 Checklist`: show ovulatory dysfunction, clinical hyperandrogenism, ovarian morphology/AMH, exclusions, and metabolic risk.
+5. `5 Action`: show grouped PCOS pathway, missing evidence, differential flags, and recommended next step.
 
 Speaker point:
 
@@ -61,9 +70,9 @@ Lean PCOS
 
 Click path:
 
-1. `Risk Result`: show that normal BMI does not eliminate risk.
-2. `Guideline Checklist`: show irregular cycles and androgen signs.
-3. `Next Action`: highlight the lean PCOS alert.
+1. `2 Risk`: show that normal BMI does not eliminate risk.
+2. `3 Checklist`: show irregular cycles and androgen signs.
+3. `5 Action`: highlight the lean PCOS alert.
 
 Speaker point:
 
@@ -79,9 +88,9 @@ Endometriosis-like
 
 Click path:
 
-1. `Patient Intake`: show pain features.
-2. `Next Action`: show endometriosis-pattern red flags.
-3. `Guideline Checklist`: show weaker PCOS evidence.
+1. `1 Intake`: show pain features.
+2. `5 Action`: show endometriosis-pattern red flags.
+3. `3 Checklist`: show weaker PCOS evidence.
 
 Speaker point:
 
@@ -97,9 +106,9 @@ Incomplete Data
 
 Click path:
 
-1. `Risk Result`: show fallback to the history-only tier.
-2. `Guideline Checklist`: show incomplete exclusions.
-3. `Next Action`: show missing evidence and low-resource pathway.
+1. `2 Risk`: show fallback to the history-only tier.
+2. `3 Checklist`: show incomplete exclusions.
+3. `5 Action`: show missing evidence and low-resource pathway.
 
 Speaker point:
 
@@ -110,7 +119,7 @@ Speaker point:
 Click:
 
 ```text
-Model Evidence
+4 Evidence
 ```
 
 Show:
