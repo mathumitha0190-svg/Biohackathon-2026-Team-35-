@@ -38,14 +38,21 @@ Run tests:
 uv run pytest
 ```
 
+Build a shareable presentation bundle:
+
+```powershell
+uv run python scripts/export_presentation.py
+```
+
 ## Outputs
 
 - `reports/data_profile.md`
 - `reports/model_metrics.json`
 - `reports/model_report.md`
 - `models/pcos_models.joblib`
+- `exports/pcos_navigator_presentation/`
 
-Generated reports and model artifacts are ignored by git. Regenerate them with:
+Generated reports, model artifacts, and exports are ignored by git. Regenerate model evidence with:
 
 ```powershell
 uv run python scripts/train_models.py
@@ -60,6 +67,26 @@ The training command writes:
 - a selected screening threshold per model tier
 - subgroup metrics by BMI group and age group, with small groups marked as insufficient
 - `reports/model_report.md`, a human-readable model summary for presentation prep
+
+## Presentation Kit
+
+Committed judge-facing materials live in `docs/`:
+
+- `docs/demo_script.md`
+- `docs/slide_outline.md`
+- `docs/case_cards.md`
+- `docs/judging_map.md`
+
+Recommended live demo flow:
+
+1. Start the app with `uv run streamlit run app.py`.
+2. Demo `Typical PCOS` to show the complete pathway.
+3. Demo `Lean PCOS` to show normal-BMI PCOS handling.
+4. Demo `Endometriosis-like` to show differential red flags.
+5. Demo `Incomplete Data` to show low-resource fallback.
+6. End on the `Model Evidence` tab with calibration, thresholds, and subgroup caveats.
+
+The export command creates an ignored bundle at `exports/pcos_navigator_presentation/` and intentionally excludes datasets and model binaries.
 
 ## Dataset Limitations
 

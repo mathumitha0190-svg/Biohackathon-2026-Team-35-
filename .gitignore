@@ -6,4 +6,5 @@ __pycache__/
 models/*.joblib
 reports/*.json
 reports/*.md
+exports/
 *.log
