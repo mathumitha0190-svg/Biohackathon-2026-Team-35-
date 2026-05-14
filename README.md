@@ -50,12 +50,19 @@ Run final readiness checks:
 uv run python scripts/check_readiness.py
 ```
 
+Check optional screenshot evidence:
+
+```powershell
+uv run python scripts/check_visual_evidence.py
+```
+
 ## Outputs
 
 - `reports/data_profile.md`
 - `reports/model_metrics.json`
 - `reports/model_report.md`
 - `reports/readiness_report.md`
+- `reports/visual_evidence_report.md`
 - `models/pcos_models.joblib`
 - `exports/pcos_navigator_presentation/`
 
@@ -87,6 +94,7 @@ Committed judge-facing materials live in `docs/`:
 - `docs/rubric_scorecard.md`
 - `docs/limitations_and_validation.md`
 - `docs/final_submission_checklist.md`
+- `docs/visual_evidence_guide.md`
 
 Recommended live demo flow:
 
@@ -107,12 +115,15 @@ Use this sequence before presenting:
 uv run python scripts/profile_data.py
 uv run python scripts/train_models.py
 uv run python scripts/check_readiness.py
+uv run python scripts/check_visual_evidence.py
 uv run python scripts/export_presentation.py
 uv run pytest
 uv run streamlit run app.py
 ```
 
 The readiness command writes `reports/readiness_report.md`, which checks source docs, generated artifacts, export safety, the safety statement, app command, and rubric coverage.
+
+Optional screenshot evidence can be saved under `assets/screenshots/` using the filenames in `docs/visual_evidence_guide.md`. Screenshot image files are ignored by git, and `uv run python scripts/check_visual_evidence.py` writes `reports/visual_evidence_report.md` with warnings for any missing screenshots.
 
 ## Dataset Limitations
 

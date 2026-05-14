@@ -3,7 +3,14 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from pcos_navigator.config import MODEL_REPORT_PATH, PROJECT_ROOT, READINESS_REPORT_PATH, SAFETY_STATEMENT
+from pcos_navigator.config import (
+    MODEL_REPORT_PATH,
+    PROJECT_ROOT,
+    READINESS_REPORT_PATH,
+    SAFETY_STATEMENT,
+    SCREENSHOTS_DIR,
+    VISUAL_EVIDENCE_REPORT_PATH,
+)
 
 
 DOC_FILENAMES = [
@@ -15,6 +22,7 @@ DOC_FILENAMES = [
     "rubric_scorecard.md",
     "limitations_and_validation.md",
     "final_submission_checklist.md",
+    "visual_evidence_guide.md",
 ]
 
 SOURCE_DOCS_DIR = PROJECT_ROOT / "docs"
@@ -24,7 +32,11 @@ EXPORT_DIR = EXPORT_ROOT / "pcos_navigator_presentation"
 BLOCKED_SUFFIXES = {".xlsx", ".csv", ".tar", ".joblib"}
 
 
-def build_export_readme(includes_model_report: bool, includes_readiness_report: bool) -> str:
+def build_export_readme(
+    includes_model_report: bool,
+    includes_readiness_report: bool,
+    includes_visual_report: bool,
+) -> str:
     model_report_line = (
         "- `model_report.md`: generated model evidence summary\n"
         if includes_model_report
@@ -34,6 +46,11 @@ def build_export_readme(includes_model_report: bool, includes_readiness_report: 
         "- `readiness_report.md`: generated final readiness checks\n"
         if includes_readiness_report
         else "- `readiness_report.md`: not included because it has not been generated yet\n"
+    )
+    visual_report_line = (
+        "- `visual_evidence_report.md`: generated screenshot readiness checks\n"
+        if includes_visual_report
+        else "- `visual_evidence_report.md`: not included because it has not been generated yet\n"
     )
     return (
         "# PCOS Navigator Presentation Bundle\n\n"
@@ -48,6 +65,7 @@ def build_export_readme(includes_model_report: bool, includes_readiness_report: 
         "uv run python scripts/profile_data.py\n"
         "uv run python scripts/train_models.py\n"
         "uv run python scripts/check_readiness.py\n"
+        "uv run python scripts/check_visual_evidence.py\n"
         "uv run streamlit run app.py\n"
         "```\n\n"
         "Open the app at:\n\n"
@@ -63,8 +81,10 @@ def build_export_readme(includes_model_report: bool, includes_readiness_report: 
         "- `rubric_scorecard.md`: full rubric proof checklist\n"
         "- `limitations_and_validation.md`: validation caveats and deployment plan\n"
         "- `final_submission_checklist.md`: pre-demo checklist\n"
+        "- `visual_evidence_guide.md`: screenshot capture guide\n"
         f"{model_report_line}\n"
         f"{readiness_report_line}\n"
+        f"{visual_report_line}\n"
         "This export intentionally excludes datasets and model binaries.\n"
     )
 
@@ -99,8 +119,22 @@ def export_presentation(export_dir: Path = EXPORT_DIR) -> Path:
     if includes_readiness_report:
         shutil.copy2(READINESS_REPORT_PATH, export_dir / "readiness_report.md")
 
+    includes_visual_report = VISUAL_EVIDENCE_REPORT_PATH.exists()
+    if includes_visual_report:
+        shutil.copy2(VISUAL_EVIDENCE_REPORT_PATH, export_dir / "visual_evidence_report.md")
+
+    screenshots = [
+        path for path in SCREENSHOTS_DIR.glob("*.png")
+        if path.is_file()
+    ]
+    if screenshots:
+        screenshots_export_dir = export_dir / "screenshots"
+        screenshots_export_dir.mkdir(parents=True, exist_ok=True)
+        for screenshot in screenshots:
+            shutil.copy2(screenshot, screenshots_export_dir / screenshot.name)
+
     (export_dir / "README.md").write_text(
-        build_export_readme(includes_model_report, includes_readiness_report),
+        build_export_readme(includes_model_report, includes_readiness_report, includes_visual_report),
         encoding="utf-8",
     )
     ensure_no_blocked_files(export_dir)

@@ -9,6 +9,7 @@ uv sync --dev
 uv run python scripts/profile_data.py
 uv run python scripts/train_models.py
 uv run python scripts/check_readiness.py
+uv run python scripts/check_visual_evidence.py
 uv run python scripts/export_presentation.py
 uv run pytest
 uv run streamlit run app.py
@@ -26,6 +27,7 @@ http://localhost:8501
 - `reports/model_metrics.json`
 - `reports/model_report.md`
 - `reports/readiness_report.md`
+- `reports/visual_evidence_report.md`
 - `models/pcos_models.joblib`
 - `exports/pcos_navigator_presentation/`
 
@@ -41,6 +43,7 @@ Generated reports, models, and exports are ignored by git.
 - `docs/slide_outline.md`
 - `docs/case_cards.md`
 - `docs/judging_map.md`
+- `docs/visual_evidence_guide.md`
 
 ## Demo Order
 

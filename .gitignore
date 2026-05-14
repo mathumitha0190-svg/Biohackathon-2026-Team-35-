@@ -7,4 +7,8 @@ models/*.joblib
 reports/*.json
 reports/*.md
 exports/
+assets/screenshots/*.png
+assets/screenshots/*.jpg
+assets/screenshots/*.jpeg
+assets/screenshots/*.webp
 *.log

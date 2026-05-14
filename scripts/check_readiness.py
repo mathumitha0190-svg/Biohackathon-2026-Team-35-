@@ -11,6 +11,7 @@ from pcos_navigator.config import (
     READINESS_REPORT_PATH,
     REPORTS_DIR,
     SAFETY_STATEMENT,
+    VISUAL_EVIDENCE_REPORT_PATH,
 )
 
 
@@ -23,12 +24,14 @@ REQUIRED_DOCS = [
     "docs/slide_outline.md",
     "docs/case_cards.md",
     "docs/judging_map.md",
+    "docs/visual_evidence_guide.md",
 ]
 
 GENERATED_ARTIFACTS = {
     "reports/data_profile.md": "uv run python scripts/profile_data.py",
     "reports/model_report.md": "uv run python scripts/train_models.py",
     "models/pcos_models.joblib": "uv run python scripts/train_models.py",
+    "reports/visual_evidence_report.md": "uv run python scripts/check_visual_evidence.py",
 }
 
 RUBRIC_CATEGORIES = [
@@ -146,6 +149,7 @@ def readiness_to_markdown(results: list[ReadinessResult]) -> str:
             "uv run python scripts/profile_data.py",
             "uv run python scripts/train_models.py",
             "uv run python scripts/check_readiness.py",
+            "uv run python scripts/check_visual_evidence.py",
             "uv run python scripts/export_presentation.py",
             "uv run pytest",
             "uv run streamlit run app.py",

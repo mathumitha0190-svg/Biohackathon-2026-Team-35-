@@ -15,9 +15,11 @@ def test_export_presentation_bundle_includes_docs_and_readme(tmp_path):
     assert SAFETY_STATEMENT in readme
     assert "uv run streamlit run app.py" in readme
     assert "uv run python scripts/check_readiness.py" in readme
+    assert "uv run python scripts/check_visual_evidence.py" in readme
     assert "Typical PCOS" in readme
     assert (export_dir / "evidence_dossier.md").exists()
     assert (export_dir / "rubric_scorecard.md").exists()
+    assert (export_dir / "visual_evidence_guide.md").exists()
 
 
 def test_export_presentation_excludes_data_and_model_files(tmp_path):
@@ -47,3 +49,24 @@ def test_export_includes_readiness_report_only_when_present(tmp_path):
         assert readiness_report.exists()
     else:
         assert not readiness_report.exists()
+
+
+def test_export_includes_visual_evidence_report_only_when_present(tmp_path):
+    export_dir = export_presentation(tmp_path / "pcos_navigator_presentation")
+    visual_report = export_dir / "visual_evidence_report.md"
+
+    if Path("reports/visual_evidence_report.md").exists():
+        assert visual_report.exists()
+    else:
+        assert not visual_report.exists()
+
+
+def test_export_copies_existing_screenshot_images(tmp_path, monkeypatch):
+    screenshot_dir = tmp_path / "screenshots_source"
+    screenshot_dir.mkdir()
+    (screenshot_dir / "01_intake_summary.png").write_bytes(b"fake-png")
+    monkeypatch.setattr("scripts.export_presentation.SCREENSHOTS_DIR", screenshot_dir)
+
+    export_dir = export_presentation(tmp_path / "pcos_navigator_presentation")
+
+    assert (export_dir / "screenshots" / "01_intake_summary.png").exists()
