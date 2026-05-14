@@ -25,6 +25,10 @@ REQUIRED_DOCS = [
     "docs/case_cards.md",
     "docs/judging_map.md",
     "docs/visual_evidence_guide.md",
+    "docs/final_demo_rehearsal.md",
+    "docs/judge_one_pager.md",
+    "docs/judge_q_and_a.md",
+    "docs/submission_manifest.md",
 ]
 
 GENERATED_ARTIFACTS = {

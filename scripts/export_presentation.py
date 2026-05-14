@@ -25,6 +25,9 @@ DOC_FILENAMES = [
     "final_submission_checklist.md",
     "visual_evidence_guide.md",
     "final_demo_rehearsal.md",
+    "judge_one_pager.md",
+    "judge_q_and_a.md",
+    "submission_manifest.md",
 ]
 
 SOURCE_DOCS_DIR = PROJECT_ROOT / "docs"
@@ -88,7 +91,17 @@ def build_export_readme(
         "```text\n"
         "http://localhost:8501\n"
         "```\n\n"
+        "## Fast Judge Review Path\n\n"
+        "1. `judge_one_pager.md`: two-minute executive brief\n"
+        "2. `demo_script.md`: live demo click path\n"
+        "3. `evidence_dossier.md`: cited clinical rationale\n"
+        "4. `model_report.md`: generated validation summary\n"
+        "5. `screenshots/`: visual proof of app and readiness flow, when present\n"
+        "6. `preflight_submission_report.md`: generated final dry-run status\n\n"
         "## Included Files\n\n"
+        "- `judge_one_pager.md`: executive judge brief\n"
+        "- `judge_q_and_a.md`: expected judge Q&A answers\n"
+        "- `submission_manifest.md`: final submission inventory\n"
         "- `demo_script.md`: 5-minute live demo path\n"
         "- `slide_outline.md`: 8-slide pitch structure\n"
         "- `case_cards.md`: prepared patient demo cases\n"

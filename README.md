@@ -95,6 +95,15 @@ The training command writes:
 - subgroup metrics by BMI group and age group, with small groups marked as insufficient
 - `reports/model_report.md`, a human-readable model summary for presentation prep
 
+## For Judges
+
+Fastest review path:
+
+1. `docs/judge_one_pager.md`
+2. `exports/pcos_navigator_presentation/README.md`
+3. `reports/preflight_submission_report.md`
+4. `uv run streamlit run app.py`
+
 ## Presentation Kit
 
 Committed judge-facing materials live in `docs/`:
@@ -109,6 +118,9 @@ Committed judge-facing materials live in `docs/`:
 - `docs/final_submission_checklist.md`
 - `docs/visual_evidence_guide.md`
 - `docs/final_demo_rehearsal.md`
+- `docs/judge_one_pager.md`
+- `docs/judge_q_and_a.md`
+- `docs/submission_manifest.md`
 
 Recommended live demo flow:
 

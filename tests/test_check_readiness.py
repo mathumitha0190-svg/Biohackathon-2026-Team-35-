@@ -11,8 +11,15 @@ from pcos_navigator.config import SAFETY_STATEMENT
 def test_required_docs_are_detected():
     results = check_required_docs()
     labels = {result.label for result in results}
+    expected_judge_docs = {
+        "docs/final_demo_rehearsal.md",
+        "docs/judge_one_pager.md",
+        "docs/judge_q_and_a.md",
+        "docs/submission_manifest.md",
+    }
 
     assert set(REQUIRED_DOCS).issubset(labels)
+    assert expected_judge_docs.issubset(labels)
     assert all(result.status == "PASS" for result in results)
 
 
