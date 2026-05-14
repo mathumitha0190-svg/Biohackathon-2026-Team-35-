@@ -16,6 +16,7 @@ def test_export_presentation_bundle_includes_docs_and_readme(tmp_path):
     assert "uv run streamlit run app.py" in readme
     assert "uv run python scripts/check_readiness.py" in readme
     assert "uv run python scripts/check_visual_evidence.py" in readme
+    assert "uv run python scripts/preflight_submission.py" in readme
     assert "Typical PCOS" in readme
     assert (export_dir / "evidence_dossier.md").exists()
     assert (export_dir / "rubric_scorecard.md").exists()
@@ -59,6 +60,16 @@ def test_export_includes_visual_evidence_report_only_when_present(tmp_path):
         assert visual_report.exists()
     else:
         assert not visual_report.exists()
+
+
+def test_export_includes_preflight_report_only_when_present(tmp_path):
+    export_dir = export_presentation(tmp_path / "pcos_navigator_presentation")
+    preflight_report = export_dir / "preflight_submission_report.md"
+
+    if Path("reports/preflight_submission_report.md").exists():
+        assert preflight_report.exists()
+    else:
+        assert not preflight_report.exists()
 
 
 def test_export_copies_existing_screenshot_images(tmp_path, monkeypatch):

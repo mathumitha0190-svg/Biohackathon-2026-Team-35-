@@ -13,6 +13,7 @@ MODEL_METRICS_PATH = REPORTS_DIR / "model_metrics.json"
 MODEL_REPORT_PATH = REPORTS_DIR / "model_report.md"
 READINESS_REPORT_PATH = REPORTS_DIR / "readiness_report.md"
 VISUAL_EVIDENCE_REPORT_PATH = REPORTS_DIR / "visual_evidence_report.md"
+PREFLIGHT_REPORT_PATH = REPORTS_DIR / "preflight_submission_report.md"
 
 SAFETY_STATEMENT = (
     "This tool supports triage and investigation planning. It is not a diagnosis."

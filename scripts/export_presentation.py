@@ -5,6 +5,7 @@ from pathlib import Path
 
 from pcos_navigator.config import (
     MODEL_REPORT_PATH,
+    PREFLIGHT_REPORT_PATH,
     PROJECT_ROOT,
     READINESS_REPORT_PATH,
     SAFETY_STATEMENT,
@@ -36,6 +37,7 @@ def build_export_readme(
     includes_model_report: bool,
     includes_readiness_report: bool,
     includes_visual_report: bool,
+    includes_preflight_report: bool,
 ) -> str:
     model_report_line = (
         "- `model_report.md`: generated model evidence summary\n"
@@ -52,6 +54,11 @@ def build_export_readme(
         if includes_visual_report
         else "- `visual_evidence_report.md`: not included because it has not been generated yet\n"
     )
+    preflight_report_line = (
+        "- `preflight_submission_report.md`: generated final judge dry-run report\n"
+        if includes_preflight_report
+        else "- `preflight_submission_report.md`: not included because it has not been generated yet\n"
+    )
     return (
         "# PCOS Navigator Presentation Bundle\n\n"
         f"> {SAFETY_STATEMENT}\n\n"
@@ -67,6 +74,10 @@ def build_export_readme(
         "uv run python scripts/check_readiness.py\n"
         "uv run python scripts/check_visual_evidence.py\n"
         "uv run streamlit run app.py\n"
+        "```\n\n"
+        "One-command pre-demo dry run:\n\n"
+        "```powershell\n"
+        "uv run python scripts/preflight_submission.py\n"
         "```\n\n"
         "Open the app at:\n\n"
         "```text\n"
@@ -85,6 +96,7 @@ def build_export_readme(
         f"{model_report_line}\n"
         f"{readiness_report_line}\n"
         f"{visual_report_line}\n"
+        f"{preflight_report_line}\n"
         "This export intentionally excludes datasets and model binaries.\n"
     )
 
@@ -123,6 +135,10 @@ def export_presentation(export_dir: Path = EXPORT_DIR) -> Path:
     if includes_visual_report:
         shutil.copy2(VISUAL_EVIDENCE_REPORT_PATH, export_dir / "visual_evidence_report.md")
 
+    includes_preflight_report = PREFLIGHT_REPORT_PATH.exists()
+    if includes_preflight_report:
+        shutil.copy2(PREFLIGHT_REPORT_PATH, export_dir / "preflight_submission_report.md")
+
     screenshots = [
         path for path in SCREENSHOTS_DIR.glob("*.png")
         if path.is_file()
@@ -134,7 +150,12 @@ def export_presentation(export_dir: Path = EXPORT_DIR) -> Path:
             shutil.copy2(screenshot, screenshots_export_dir / screenshot.name)
 
     (export_dir / "README.md").write_text(
-        build_export_readme(includes_model_report, includes_readiness_report, includes_visual_report),
+        build_export_readme(
+            includes_model_report,
+            includes_readiness_report,
+            includes_visual_report,
+            includes_preflight_report,
+        ),
         encoding="utf-8",
     )
     ensure_no_blocked_files(export_dir)

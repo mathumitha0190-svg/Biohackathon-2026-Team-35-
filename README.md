@@ -56,6 +56,12 @@ Check optional screenshot evidence:
 uv run python scripts/check_visual_evidence.py
 ```
 
+Run the full final judge dry run:
+
+```powershell
+uv run python scripts/preflight_submission.py
+```
+
 ## Outputs
 
 - `reports/data_profile.md`
@@ -63,6 +69,7 @@ uv run python scripts/check_visual_evidence.py
 - `reports/model_report.md`
 - `reports/readiness_report.md`
 - `reports/visual_evidence_report.md`
+- `reports/preflight_submission_report.md`
 - `models/pcos_models.joblib`
 - `exports/pcos_navigator_presentation/`
 
@@ -118,12 +125,15 @@ uv run python scripts/check_readiness.py
 uv run python scripts/check_visual_evidence.py
 uv run python scripts/export_presentation.py
 uv run pytest
+uv run python scripts/preflight_submission.py
 uv run streamlit run app.py
 ```
 
 The readiness command writes `reports/readiness_report.md`, which checks source docs, generated artifacts, export safety, the safety statement, app command, and rubric coverage.
 
 Optional screenshot evidence can be saved under `assets/screenshots/` using the filenames in `docs/visual_evidence_guide.md`. Screenshot image files are ignored by git, and `uv run python scripts/check_visual_evidence.py` writes `reports/visual_evidence_report.md` with warnings for any missing screenshots.
+
+For the final pre-demo pass, run `uv run python scripts/preflight_submission.py`. It executes the reproducibility commands, tests, app import check, export refresh, and writes `reports/preflight_submission_report.md`.
 
 ## Dataset Limitations
 

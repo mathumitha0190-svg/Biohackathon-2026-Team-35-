@@ -12,7 +12,14 @@ uv run python scripts/check_readiness.py
 uv run python scripts/check_visual_evidence.py
 uv run python scripts/export_presentation.py
 uv run pytest
+uv run python scripts/preflight_submission.py
 uv run streamlit run app.py
+```
+
+For the final one-command dry run before the demo:
+
+```powershell
+uv run python scripts/preflight_submission.py
 ```
 
 Open the app:
@@ -28,6 +35,7 @@ http://localhost:8501
 - `reports/model_report.md`
 - `reports/readiness_report.md`
 - `reports/visual_evidence_report.md`
+- `reports/preflight_submission_report.md`
 - `models/pcos_models.joblib`
 - `exports/pcos_navigator_presentation/`
 
