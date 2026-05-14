@@ -22,6 +22,12 @@ For the final one-command dry run before the demo:
 uv run python scripts/preflight_submission.py
 ```
 
+After screenshots are captured, run the strict screenshot gate:
+
+```powershell
+uv run python scripts/preflight_submission.py --strict-screenshots
+```
+
 Open the app:
 
 ```text
@@ -52,6 +58,7 @@ Generated reports, models, and exports are ignored by git.
 - `docs/case_cards.md`
 - `docs/judging_map.md`
 - `docs/visual_evidence_guide.md`
+- `docs/final_demo_rehearsal.md`
 
 ## Demo Order
 

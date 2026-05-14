@@ -4,7 +4,10 @@ from scripts.preflight_submission import (
     CommandResult,
     check_generated_artifacts,
     command_results_to_markdown,
+    fix_items,
     preflight_to_markdown,
+    preflight_status,
+    screenshot_count_summary,
     summarize_export_bundle,
 )
 from pcos_navigator.config import SAFETY_STATEMENT
@@ -40,6 +43,9 @@ def test_preflight_report_contains_safety_app_demo_order_and_rubric_sections(tmp
     assert "Rubric-Facing Evidence" in report
     assert "Clinical validity" in report
     assert "Screenshot Evidence Status" in report
+    assert "Final Status: READY WITH WARNINGS" in report
+    assert "0/6 screenshots present" in report
+    assert "What To Fix Before Judging" in report
 
 
 def test_missing_generated_artifacts_have_actionable_regeneration_messages(tmp_path):
@@ -60,3 +66,56 @@ def test_export_summary_flags_blocked_files(tmp_path):
     results = summarize_export_bundle(export_dir)
 
     assert any(result.label == "export blocked files" and result.status == "FAIL" for result in results)
+
+
+def test_default_mode_treats_missing_screenshots_as_warning(tmp_path):
+    screenshot_results = check_visual_evidence(tmp_path)
+    status = preflight_status(
+        [CommandResult("ok", "uv run ok", "PASS", 0, "ok")],
+        [CheckResult("artifact", "PASS", "present")],
+        [CheckResult("export", "PASS", "present")],
+        screenshot_results,
+        strict_screenshots=False,
+    )
+
+    assert status == "READY WITH WARNINGS"
+    assert screenshot_count_summary(screenshot_results) == "0/6 screenshots present"
+
+
+def test_strict_mode_treats_missing_screenshots_as_blocking(tmp_path):
+    screenshot_results = check_visual_evidence(tmp_path)
+    status = preflight_status(
+        [CommandResult("ok", "uv run ok", "PASS", 0, "ok")],
+        [CheckResult("artifact", "PASS", "present")],
+        [CheckResult("export", "PASS", "present")],
+        screenshot_results,
+        strict_screenshots=True,
+    )
+    fixes = fix_items([], [], [], screenshot_results, strict_screenshots=True)
+
+    assert status == "BLOCKED"
+    assert any(item.startswith("- FAIL: `01_intake_summary.png`") for item in fixes)
+
+
+def test_final_status_ready_when_all_checks_pass(tmp_path):
+    for filename in [
+        "01_intake_summary.png",
+        "02_risk_result.png",
+        "03_guideline_checklist.png",
+        "04_model_evidence.png",
+        "05_next_action_handoff.png",
+        "06_readiness_export.png",
+    ]:
+        (tmp_path / filename).write_bytes(b"fake-png")
+
+    screenshot_results = check_visual_evidence(tmp_path)
+    status = preflight_status(
+        [CommandResult("ok", "uv run ok", "PASS", 0, "ok")],
+        [CheckResult("artifact", "PASS", "present")],
+        [CheckResult("export", "PASS", "present")],
+        screenshot_results,
+        strict_screenshots=True,
+    )
+
+    assert status == "READY"
+    assert screenshot_count_summary(screenshot_results) == "6/6 screenshots present"

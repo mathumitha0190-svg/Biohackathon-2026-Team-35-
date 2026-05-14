@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
@@ -139,6 +140,16 @@ RUBRIC_EVIDENCE = [
     "Methodology: dataset audit, subgroup caveats, and generated model report",
     "Code quality and presentation: tests, readiness checks, docs, and visual evidence guide",
 ]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the final PCOS Navigator pre-demo dry run.")
+    parser.add_argument(
+        "--strict-screenshots",
+        action="store_true",
+        help="Treat missing required screenshot evidence as blocking for the final submission check.",
+    )
+    return parser.parse_args()
 
 
 def _trim_output(value: str, max_chars: int = 500) -> str:
@@ -285,18 +296,82 @@ def screenshot_results_to_markdown(results: list[VisualEvidenceResult]) -> list[
     return lines
 
 
+def screenshot_count_summary(results: list[VisualEvidenceResult]) -> str:
+    present = sum(result.status == "PASS" for result in results)
+    return f"{present}/{len(results)} screenshots present"
+
+
+def preflight_status(
+    command_results: list[CommandResult],
+    artifact_results: list[CheckResult],
+    export_results: list[CheckResult],
+    screenshot_results: list[VisualEvidenceResult],
+    strict_screenshots: bool = False,
+) -> str:
+    blocking_results = [*command_results, *artifact_results, *export_results]
+    has_blocking_failure = any(result.status == "FAIL" for result in blocking_results)
+    screenshot_warnings = [result for result in screenshot_results if result.status != "PASS"]
+    if has_blocking_failure or (strict_screenshots and screenshot_warnings):
+        return "BLOCKED"
+
+    has_warning = any(result.status == "WARN" for result in [*artifact_results, *export_results])
+    has_warning = has_warning or bool(screenshot_warnings)
+    return "READY WITH WARNINGS" if has_warning else "READY"
+
+
+def fix_items(
+    command_results: list[CommandResult],
+    artifact_results: list[CheckResult],
+    export_results: list[CheckResult],
+    screenshot_results: list[VisualEvidenceResult],
+    strict_screenshots: bool = False,
+) -> list[str]:
+    items: list[str] = []
+    for result in command_results:
+        if result.status != "PASS":
+            items.append(f"- {result.status}: `{result.label}` via `{result.command}` - {result.detail}")
+    for result in [*artifact_results, *export_results]:
+        if result.status != "PASS":
+            items.append(f"- {result.status}: `{result.label}` - {result.detail}")
+    for result in screenshot_results:
+        if result.status != "PASS":
+            label = "FAIL" if strict_screenshots else result.status
+            items.append(f"- {label}: `{result.filename}` - {result.detail}")
+    if not items:
+        return ["- No blocking or warning items remain."]
+    return items
+
+
 def preflight_to_markdown(
     command_results: list[CommandResult],
     artifact_results: list[CheckResult],
     export_results: list[CheckResult],
     screenshot_results: list[VisualEvidenceResult],
+    strict_screenshots: bool = False,
 ) -> str:
+    final_status = preflight_status(
+        command_results,
+        artifact_results,
+        export_results,
+        screenshot_results,
+        strict_screenshots,
+    )
+    screenshot_summary = screenshot_count_summary(screenshot_results)
     lines = [
         "# PCOS Navigator Preflight Submission Report",
         "",
         f"> {SAFETY_STATEMENT}",
         "",
         f"Generated: {datetime.now(UTC).isoformat(timespec='seconds')}",
+        "",
+        f"## Final Status: {final_status}",
+        "",
+        f"- Screenshot evidence: {screenshot_summary}",
+        f"- Strict screenshot mode: {'enabled' if strict_screenshots else 'disabled'}",
+        "",
+        "## What To Fix Before Judging",
+        "",
+        *fix_items(command_results, artifact_results, export_results, screenshot_results, strict_screenshots),
         "",
         "## App Command",
         "",
@@ -318,7 +393,9 @@ def preflight_to_markdown(
         "",
         "## Screenshot Evidence Status",
         "",
-        "Missing screenshots are warnings, not failures.",
+        "Missing screenshots are warnings by default and blocking only when `--strict-screenshots` is used.",
+        "",
+        f"Summary: {screenshot_summary}.",
         "",
         *screenshot_results_to_markdown(screenshot_results),
         "",
@@ -341,7 +418,7 @@ def has_failures(command_results: list[CommandResult], artifact_results: list[Ch
     return any(result.status == "FAIL" for result in [*command_results, *artifact_results, *export_results])
 
 
-def write_preflight_report(path: Path = PREFLIGHT_REPORT_PATH) -> tuple[Path, bool]:
+def write_preflight_report(path: Path = PREFLIGHT_REPORT_PATH, strict_screenshots: bool = False) -> tuple[Path, bool]:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     command_results = run_preflight_commands()
 
@@ -349,7 +426,13 @@ def write_preflight_report(path: Path = PREFLIGHT_REPORT_PATH) -> tuple[Path, bo
     export_results = summarize_export_bundle()
     screenshot_results = check_visual_evidence()
     path.write_text(
-        preflight_to_markdown(command_results, artifact_results, export_results, screenshot_results),
+        preflight_to_markdown(
+            command_results,
+            artifact_results,
+            export_results,
+            screenshot_results,
+            strict_screenshots,
+        ),
         encoding="utf-8",
     )
 
@@ -362,16 +445,30 @@ def write_preflight_report(path: Path = PREFLIGHT_REPORT_PATH) -> tuple[Path, bo
         artifact_results = check_generated_artifacts()
         export_results = summarize_export_bundle()
         path.write_text(
-            preflight_to_markdown(command_results, artifact_results, export_results, screenshot_results),
+            preflight_to_markdown(
+                command_results,
+                artifact_results,
+                export_results,
+                screenshot_results,
+                strict_screenshots,
+            ),
             encoding="utf-8",
         )
         shutil.copy2(path, EXPORT_DIR / path.name)
 
-    return path, has_failures(command_results, artifact_results, export_results)
+    final_status = preflight_status(
+        command_results,
+        artifact_results,
+        export_results,
+        screenshot_results,
+        strict_screenshots,
+    )
+    return path, final_status == "BLOCKED"
 
 
 def main() -> None:
-    report_path, failed = write_preflight_report()
+    args = parse_args()
+    report_path, failed = write_preflight_report(strict_screenshots=args.strict_screenshots)
     print(f"Wrote {report_path}")
     raise SystemExit(1 if failed else 0)
 

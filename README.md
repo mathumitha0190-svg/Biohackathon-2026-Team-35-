@@ -62,6 +62,12 @@ Run the full final judge dry run:
 uv run python scripts/preflight_submission.py
 ```
 
+After capturing screenshots, run the strict final evidence gate:
+
+```powershell
+uv run python scripts/preflight_submission.py --strict-screenshots
+```
+
 ## Outputs
 
 - `reports/data_profile.md`
@@ -102,6 +108,7 @@ Committed judge-facing materials live in `docs/`:
 - `docs/limitations_and_validation.md`
 - `docs/final_submission_checklist.md`
 - `docs/visual_evidence_guide.md`
+- `docs/final_demo_rehearsal.md`
 
 Recommended live demo flow:
 
@@ -134,6 +141,8 @@ The readiness command writes `reports/readiness_report.md`, which checks source 
 Optional screenshot evidence can be saved under `assets/screenshots/` using the filenames in `docs/visual_evidence_guide.md`. Screenshot image files are ignored by git, and `uv run python scripts/check_visual_evidence.py` writes `reports/visual_evidence_report.md` with warnings for any missing screenshots.
 
 For the final pre-demo pass, run `uv run python scripts/preflight_submission.py`. It executes the reproducibility commands, tests, app import check, export refresh, and writes `reports/preflight_submission_report.md`.
+
+After all six screenshots are saved under `assets/screenshots/`, run `uv run python scripts/preflight_submission.py --strict-screenshots`. Strict mode makes missing screenshots blocking for the final local submission check; normal preflight keeps them as warnings.
 
 ## Dataset Limitations
 

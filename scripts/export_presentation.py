@@ -24,6 +24,7 @@ DOC_FILENAMES = [
     "limitations_and_validation.md",
     "final_submission_checklist.md",
     "visual_evidence_guide.md",
+    "final_demo_rehearsal.md",
 ]
 
 SOURCE_DOCS_DIR = PROJECT_ROOT / "docs"
@@ -79,6 +80,10 @@ def build_export_readme(
         "```powershell\n"
         "uv run python scripts/preflight_submission.py\n"
         "```\n\n"
+        "Strict screenshot gate after images are captured:\n\n"
+        "```powershell\n"
+        "uv run python scripts/preflight_submission.py --strict-screenshots\n"
+        "```\n\n"
         "Open the app at:\n\n"
         "```text\n"
         "http://localhost:8501\n"
@@ -93,6 +98,7 @@ def build_export_readme(
         "- `limitations_and_validation.md`: validation caveats and deployment plan\n"
         "- `final_submission_checklist.md`: pre-demo checklist\n"
         "- `visual_evidence_guide.md`: screenshot capture guide\n"
+        "- `final_demo_rehearsal.md`: timed demo rehearsal plan\n"
         f"{model_report_line}\n"
         f"{readiness_report_line}\n"
         f"{visual_report_line}\n"

@@ -17,10 +17,12 @@ def test_export_presentation_bundle_includes_docs_and_readme(tmp_path):
     assert "uv run python scripts/check_readiness.py" in readme
     assert "uv run python scripts/check_visual_evidence.py" in readme
     assert "uv run python scripts/preflight_submission.py" in readme
+    assert "uv run python scripts/preflight_submission.py --strict-screenshots" in readme
     assert "Typical PCOS" in readme
     assert (export_dir / "evidence_dossier.md").exists()
     assert (export_dir / "rubric_scorecard.md").exists()
     assert (export_dir / "visual_evidence_guide.md").exists()
+    assert (export_dir / "final_demo_rehearsal.md").exists()
 
 
 def test_export_presentation_excludes_data_and_model_files(tmp_path):
