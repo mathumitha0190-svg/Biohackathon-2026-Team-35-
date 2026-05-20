@@ -1,8 +1,46 @@
 # PCOS Navigator
 
-PCOS Navigator is a Streamlit demo MVP for evidence-based PCOS triage and diagnostic pathway support. It combines a resource-tiered logistic-regression model, guideline-style checklist, endometriosis red flags, and next-best-action recommendations.
+PCOS Navigator is a Streamlit demo MVP for evidence-based PCOS triage and diagnostic pathway support. It combines a resource-tiered risk prediction pipeline, guideline-style checklist, endometriosis red flags, and next-best-action recommendations.
 
 > This tool supports triage and investigation planning. It is not a diagnosis.
+
+This is how it works 
+
+Patient Inputs
+(age, symptoms, labs)
+        ↓
+Preprocessing Pipeline
+        ↓
+Risk Prediction Models
+(history / clinical / full)
+        ↓
+Guideline Reasoning Engine
+(Rotterdam-style evidence)
+        ↓
+Differential Flags
+(endometriosis / endocrine exclusion)
+        ↓
+Next-Best-Step Recommendation
+
+## Why PCOS Diagnosis Matters
+
+PCOS affects millions globally and remains substantially underdiagnosed due to heterogeneous symptoms, overlapping conditions, and inconsistent access to specialist care.
+
+Delayed diagnosis increases the risk of:
+- infertility complications
+- metabolic disease
+- delayed treatment
+- reduced quality of life
+
+## Design Principles
+
+PCOS Navigator was designed around five principles:
+
+1. High-sensitivity triage over aggressive classification
+2. Interpretability before complexity
+3. Resource-aware deployment
+4. Differential-diagnosis awareness
+5. Clinical workflow integration
 
 ## Setup
 
