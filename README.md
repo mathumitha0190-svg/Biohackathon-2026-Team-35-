@@ -32,6 +32,15 @@ Delayed diagnosis increases the risk of:
 - delayed treatment
 - reduced quality of life
 
+## What Makes PCOS Navigator Different
+
+Unlike generic disease classifiers, PCOS Navigator:
+- incorporates guideline-style clinical reasoning
+- supports incomplete-data workflows
+- flags overlapping symptom patterns
+- prioritizes high-sensitivity screening
+- adapts to low-resource clinical settings
+
 ## Design Principles
 
 PCOS Navigator was designed around five principles:
